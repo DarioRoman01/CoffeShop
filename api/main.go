@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/Haizza1/api/handlers"
@@ -14,13 +13,14 @@ import (
 
 func main() {
 	l := log.New(os.Stdout, "api ", log.LstdFlags)
+	port := os.Getenv("PORT")
 
 	ph := handlers.NewProducts(l)
 	sm := http.NewServeMux()
 	sm.Handle("/products", ph)
 
 	s := http.Server{
-		Addr:         ":9000",
+		Addr:         port,
 		Handler:      sm,
 		ErrorLog:     l,
 		ReadTimeout:  5 * time.Second,
@@ -29,7 +29,7 @@ func main() {
 	}
 
 	go func() {
-		l.Println("Starting server at port :9000")
+		l.Printf("Starting server at port %s\n", port)
 
 		err := s.ListenAndServe()
 		if err != nil {
@@ -39,7 +39,7 @@ func main() {
 	}()
 
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(sigChan, os.Interrupt)
 
 	sig := <-sigChan
 	log.Println("Got signal: ", sig)

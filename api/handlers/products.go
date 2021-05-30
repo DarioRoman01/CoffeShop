@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/Haizza1/api/models"
 )
@@ -26,14 +27,61 @@ func (p *Products) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.Method == http.MethodPost {
+		p.addProduct(w, r)
+		return
+	}
+
+	if r.Method == http.MethodPut {
+		p.updateProduct(w, r)
+		return
+	}
+
 	w.WriteHeader(http.StatusMethodNotAllowed)
 }
 
+// getProducts returns the products from the data store
 func (p *Products) getProducts(w http.ResponseWriter, r *http.Request) {
 	lp := models.GetProducts()
 
-	err := lp.ToJSON(w)
+	err := lp.EncodeJSON(w)
 	if err != nil {
+		http.Error(w, "Unable to marshal json", 500)
+	}
+}
+
+func (p *Products) addProduct(w http.ResponseWriter, r *http.Request) {
+	product := new(models.Product)
+	if err := product.DecodeJSON(r.Body); err != nil {
+		http.Error(w, "Unable to unmarshal json", 400) // bad request error
+		return
+	}
+
+	models.AddProduct(product)
+	if err := product.EncodeJSON(w); err != nil {
+		http.Error(w, "Unable to marshal json", 500)
+	}
+}
+
+func (p *Products) updateProduct(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	p.log.Println(id)
+	p.log.Println(r.URL.String())
+
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "error id must be a number", 400)
+		return
+	}
+
+	product := new(models.Product)
+	if err := product.DecodeJSON(r.Body); err != nil {
+		http.Error(w, "Unable to unmarshal json", 400) // bad request error
+		return
+	}
+
+	models.UpdateProduct(uint(intID), product)
+	if err := product.EncodeJSON(w); err != nil {
 		http.Error(w, "Unable to marshal json", 500)
 	}
 }
