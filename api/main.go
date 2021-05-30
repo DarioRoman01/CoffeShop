@@ -15,8 +15,9 @@ func main() {
 
 	app := fiber.New()
 	api := app.Group("/api")
+	api.Use(ph.ValidateProduct)
 
-	api.Get("/products/:id", ph.GetProducts)
+	api.Get("/products", ph.GetProducts)
 	api.Post("/products", ph.AddProduct)
 	api.Put("/products/:id", ph.UpdateProduct)
 

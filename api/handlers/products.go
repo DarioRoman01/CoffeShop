@@ -2,10 +2,18 @@ package handlers
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/Haizza1/api/models"
 	"github.com/gofiber/fiber/v2"
 )
+
+var (
+	parseError = fiber.NewError(400, "Unable to unmarshal json")
+	idError    = fiber.NewError(400, "Invalid Id")
+)
+
+const keyProduct = "prod"
 
 // Products is a http.Handler
 type Products struct {
@@ -23,24 +31,16 @@ func (p *Products) GetProducts(c *fiber.Ctx) error {
 }
 
 func (p *Products) AddProduct(c *fiber.Ctx) error {
-	prod := new(models.Product)
-	if err := c.BodyParser(prod); err != nil {
-		return fiber.NewError(400, "Unable to parse")
-	}
-
+	prod := c.Context().UserValue(keyProduct).(*models.Product)
 	models.AddProduct(prod)
 	return c.SendString("created successfully")
 }
 
 func (p *Products) UpdateProduct(c *fiber.Ctx) error {
-	prod := new(models.Product)
-	if err := c.BodyParser(prod); err != nil {
-		return fiber.NewError(400, "Unable to parse")
-	}
-
+	prod := c.Context().UserValue(keyProduct).(*models.Product)
 	id, err := c.ParamsInt("id")
 	if err != nil {
-		return fiber.NewError(400, "Invalid id")
+		return idError
 	}
 
 	err = models.UpdateProduct(uint(id), prod)
@@ -49,4 +49,18 @@ func (p *Products) UpdateProduct(c *fiber.Ctx) error {
 	}
 
 	return c.SendString("Update succesfully")
+}
+
+func (p *Products) ValidateProduct(c *fiber.Ctx) error {
+	if c.Method() != http.MethodGet {
+		prod := new(models.Product)
+		if err := c.BodyParser(prod); err != nil {
+			return parseError
+		}
+
+		c.Context().SetUserValue(keyProduct, prod)
+		return c.Next()
+	}
+
+	return c.Next()
 }
