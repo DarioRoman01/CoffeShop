@@ -1,50 +1,26 @@
 package main
 
 import (
-	"context"
 	"log"
-	"net/http"
 	"os"
-	"os/signal"
-	"time"
 
 	"github.com/Haizza1/api/handlers"
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
 	l := log.New(os.Stdout, "api ", log.LstdFlags)
 	port := os.Getenv("PORT")
-
 	ph := handlers.NewProducts(l)
-	sm := http.NewServeMux()
-	sm.Handle("/products/", ph)
 
-	s := http.Server{
-		Addr:         port,
-		Handler:      sm,
-		ErrorLog:     l,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  120 * time.Second,
+	app := fiber.New()
+	api := app.Group("/api")
+
+	api.Get("/products/:id", ph.GetProducts)
+	api.Post("/products", ph.AddProduct)
+	api.Put("/products/:id", ph.UpdateProduct)
+
+	if err := app.Listen(port); err != nil {
+		app.Shutdown()
 	}
-
-	go func() {
-		l.Printf("Starting server at port %s\n", port)
-
-		err := s.ListenAndServe()
-		if err != nil {
-			l.Printf("Error starting the server: %v", err)
-			os.Exit(1)
-		}
-	}()
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt)
-
-	sig := <-sigChan
-	log.Println("Got signal: ", sig)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	s.Shutdown(ctx)
 }

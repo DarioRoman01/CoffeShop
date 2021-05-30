@@ -1,9 +1,7 @@
 package models
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"time"
 )
 
@@ -21,31 +19,8 @@ type Product struct {
 	DeletedAt   string  `json:"-"`
 }
 
-func (p *Product) DecodeJSON(r io.Reader) error {
-	p.CreatedAt = time.Now().UTC().String()
-	p.UpdatedAt = time.Now().UTC().String()
-	decoder := json.NewDecoder(r)
-	return decoder.Decode(p)
-}
-
-func (p *Product) EncodeJSON(w io.Writer) error {
-	enc := json.NewEncoder(w)
-	return enc.Encode(p)
-}
-
 // ProductsList is a collection of Product
 type ProductsList []*Product
-
-// EncodeJSON serializes the contents of the collection to JSON
-// NewEncoder provides better performance than json.Unmarshal as it does not
-// have to buffer the output into an in memory slice of bytes
-// this reduces allocations and the overheads of the service
-//
-// https://golang.org/pkg/encoding/json/#NewEncoder
-func (p *ProductsList) EncodeJSON(w io.Writer) error {
-	enc := json.NewEncoder(w)
-	return enc.Encode(p)
-}
 
 // GetProducts returns a list of products
 func GetProducts() ProductsList {
