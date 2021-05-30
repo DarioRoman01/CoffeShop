@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// Common errors that wont change so is better to have a single instance
 var (
 	parseError = fiber.NewError(400, "Unable to unmarshal json")
 	idError    = fiber.NewError(400, "Invalid Id")
@@ -59,7 +60,8 @@ func (p *Products) ValidateProduct(c *fiber.Ctx) error {
 		}
 
 		if err := prod.Validate(); err != nil {
-			return fiber.NewError(400, err.Error())
+			c.Status(400)
+			return c.JSON(fiber.Map{"message": err.Error()})
 		}
 
 		c.Context().SetUserValue(keyProduct, prod)

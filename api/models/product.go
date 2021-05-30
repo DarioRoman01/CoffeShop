@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator"
@@ -24,8 +25,27 @@ type Product struct {
 	DeletedAt   string  `json:"-"`
 }
 
+// Validate will use the validation tags to check
+// if the product struct are valid we use strings
+// builder to generate better error messages
 func (p *Product) Validate() error {
-	return validate.Struct(p)
+	err := validate.Struct(p)
+	validationErr := err.(validator.ValidationErrors)
+
+	if len(validationErr) > 0 {
+		var buff strings.Builder
+		buff.WriteString("Missing fields: ")
+
+		for i, err := range validationErr {
+			buff.WriteString(err.Field())
+			if i != len(validationErr)-1 {
+				buff.WriteString(", ")
+			}
+		}
+		return errors.New(buff.String())
+	}
+
+	return nil
 }
 
 // ProductsList is a collection of Product
@@ -41,6 +61,7 @@ func AddProduct(p *Product) {
 	productList = append(productList, p)
 }
 
+// get the product with the given id
 func findProduct(id uint) (*Product, int, error) {
 	for i, prod := range productList {
 		if prod.ID == id {
@@ -56,6 +77,7 @@ func getNextID() uint {
 	return lp.ID + 1
 }
 
+// update product data
 func UpdateProduct(id uint, prod *Product) error {
 	_, index, err := findProduct(id)
 	if err != nil {
