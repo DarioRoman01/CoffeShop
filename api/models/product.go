@@ -3,20 +3,29 @@ package models
 import (
 	"errors"
 	"time"
+
+	"github.com/go-playground/validator"
 )
 
-var ErrProductNotFound = errors.New("Product not found")
+var (
+	ErrProductNotFound = errors.New("Product not found")
+	validate           = validator.New()
+)
 
 // Product defines the structure for an API product
 type Product struct {
 	ID          uint    `json:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Price       float32 `json:"price"`
-	SKU         string  `json:"sku"`
+	Name        string  `json:"name" validate:"required"`
+	Description string  `json:"description" validate:"required"`
+	Price       float32 `json:"price" validate:"gt=0"`
+	SKU         string  `json:"sku" validate:"required"`
 	CreatedAt   string  `json:"-"`
 	UpdatedAt   string  `json:"-"`
 	DeletedAt   string  `json:"-"`
+}
+
+func (p *Product) Validate() error {
+	return validate.Struct(p)
 }
 
 // ProductsList is a collection of Product

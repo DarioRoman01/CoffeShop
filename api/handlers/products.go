@@ -58,6 +58,10 @@ func (p *Products) ValidateProduct(c *fiber.Ctx) error {
 			return parseError
 		}
 
+		if err := prod.Validate(); err != nil {
+			return fiber.NewError(400, err.Error())
+		}
+
 		c.Context().SetUserValue(keyProduct, prod)
 		return c.Next()
 	}
