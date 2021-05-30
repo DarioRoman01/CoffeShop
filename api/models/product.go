@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var ErrProductNotFound = errors.New("Product not found")
+
 // Product defines the structure for an API product
 type Product struct {
 	ID          uint    `json:"id"`
@@ -55,20 +57,30 @@ func AddProduct(p *Product) {
 	productList = append(productList, p)
 }
 
+func findProduct(id uint) (*Product, int, error) {
+	for i, prod := range productList {
+		if prod.ID == id {
+			return prod, i, nil
+		}
+	}
+
+	return nil, 0, ErrProductNotFound
+}
+
 func getNextID() uint {
 	lp := productList[len(productList)-1]
 	return lp.ID + 1
 }
 
 func UpdateProduct(id uint, prod *Product) error {
-	for _, p := range productList {
-		if p.ID == id {
-			p = prod
-			return nil
-		}
+	_, index, err := findProduct(id)
+	if err != nil {
+		return err
 	}
 
-	return errors.New("product does not exists")
+	prod.ID = id
+	productList[index] = prod
+	return nil
 }
 
 // productList is a hard coded list of products for this

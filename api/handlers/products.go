@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"github.com/Haizza1/api/models"
@@ -33,7 +34,21 @@ func (p *Products) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPut {
-		p.updateProduct(w, r)
+		reg := regexp.MustCompile(`/([0-9]+)`)
+		group := reg.FindAllStringSubmatch(r.URL.Path, -1)
+
+		if len(group) != 1 || len(group[0]) != 2 {
+			http.Error(w, "Invalid URI", 400)
+			return
+		}
+
+		id, err := strconv.Atoi(group[0][1])
+		if err != nil {
+			http.Error(w, "Unable to parse id as integer", 500)
+			return
+		}
+
+		p.updateProduct(id, w, r)
 		return
 	}
 
@@ -63,25 +78,16 @@ func (p *Products) addProduct(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (p *Products) updateProduct(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
-	p.log.Println(id)
-	p.log.Println(r.URL.String())
-
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		http.Error(w, "error id must be a number", 400)
-		return
-	}
-
+func (p *Products) updateProduct(id int, w http.ResponseWriter, r *http.Request) {
 	product := new(models.Product)
 	if err := product.DecodeJSON(r.Body); err != nil {
 		http.Error(w, "Unable to unmarshal json", 400) // bad request error
 		return
 	}
 
-	models.UpdateProduct(uint(intID), product)
-	if err := product.EncodeJSON(w); err != nil {
-		http.Error(w, "Unable to marshal json", 500)
+	err := models.UpdateProduct(uint(id), product)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
 	}
 }
