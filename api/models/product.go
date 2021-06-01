@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 	"time"
 
@@ -19,7 +20,7 @@ type Product struct {
 	Name        string  `json:"name" validate:"required"`
 	Description string  `json:"description" validate:"required"`
 	Price       float32 `json:"price" validate:"gt=0"`
-	SKU         string  `json:"sku" validate:"required"`
+	SKU         string  `json:"sku" validate:"required,sku"`
 	CreatedAt   string  `json:"-"`
 	UpdatedAt   string  `json:"-"`
 	DeletedAt   string  `json:"-"`
@@ -29,6 +30,8 @@ type Product struct {
 // if the product struct are valid we use strings
 // builder to generate better error messages
 func (p *Product) Validate() error {
+	validate.RegisterValidation("sku", validateSKU)
+
 	err := validate.Struct(p)
 	validationErr := err.(validator.ValidationErrors)
 
@@ -46,6 +49,12 @@ func (p *Product) Validate() error {
 	}
 
 	return nil
+}
+
+func validateSKU(fl validator.FieldLevel) bool {
+	re := regexp.MustCompile(`[a-z]+-[[a-z]+-[a-z]+`)
+	matches := re.FindAllString(fl.Field().String(), -1)
+	return len(matches) == 1
 }
 
 // ProductsList is a collection of Product
