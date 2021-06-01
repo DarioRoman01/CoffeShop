@@ -10,7 +10,7 @@ import (
 
 func main() {
 	l := log.New(os.Stdout, "api ", log.LstdFlags)
-	port := os.Getenv("PORT")
+	address := os.Getenv("ADDRESS")
 	ph := handlers.NewProducts(l)
 
 	app := fiber.New()
@@ -21,7 +21,7 @@ func main() {
 	api.Post("/products", ph.AddProduct)
 	api.Put("/products/:id", ph.UpdateProduct)
 
-	if err := app.Listen(port); err != nil {
+	if err := app.Listen(address); err != nil {
 		app.Shutdown()
 	}
 }
