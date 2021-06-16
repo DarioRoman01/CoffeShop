@@ -10,23 +10,15 @@ class ProductService {
   Router get router {
     final router = Router();
 
-    router.get('/', (Request req) {
-      final payload = json.encode(data.products);
-      return Response.ok(payload,
-          headers: {'Content-Type': 'application/json'});
-    });
+    router.get('/', (Request req)  => okResponse(json.encode(data.products)));
 
     router.get('/<id|[0-9]+>', (Request req, String id) {
-      final parsedId = int.parse(id);
       try {
+        final parsedId = int.parse(id);
         final product = data.getProduct(parsedId);
-        return Response.ok(json.encode(product),
-            headers: {'Content-Type': 'application/json'});
+        return okResponse(json.encode(product));
       } catch (e) {
-        return Response.notFound(
-            json.encode({'message': (e as FormatException).message}),
-            headers: {'Content-Type': 'application/json'}
-        );
+        return notFound(json.encode({'message': (e as FormatException).message}));
       }
     });
 
@@ -41,14 +33,11 @@ class ProductService {
             headers: {'Content-Type': 'application/json'});
       } catch (e) {
         if (e is FormatException) {
-          return Response.notFound(json.encode({'message': e.message}),
-              headers: {'Content-Type': 'application/json'});
-        } else if (e is BadKeyException) {
-          return Response(400,
-              body: json.encode({'meesage': e.message}),
-              headers: {'Content-Type': 'application/json'});
+          return notFound(json.encode({'message': e.message}));
         } 
-
+        else if (e is BadKeyException) {
+          return badRequest(json.encode({'message': e.message}));
+        }
         return Response.internalServerError();
       }
     });
@@ -61,9 +50,7 @@ class ProductService {
         return Response(201, body: 'product created');
       } catch (error) {
         if (error is BadKeyException) {
-          return Response(400,
-              body: json.encode({'message': error.message}),
-              headers: {'Content-Type': 'application/json'});
+          return badRequest(json.encode({'message': error.message}));
         }
 
         return Response.internalServerError();
@@ -77,16 +64,21 @@ class ProductService {
         return Response.ok('Product deleted');
       } catch(e) {
         if (e is FormatException) {
-          return Response.notFound(
-            json.encode({'message': e.message}),
-            headers: {'Content-Type': 'application/json'}
-          );
+          return notFound(json.encode({'message': e.message}));
         }
-
         return Response.internalServerError();
       }
     });
 
     return router;
   }
+
+  Response okResponse(String body) => 
+    Response.ok(body, headers: {'Content-Type': 'application/json'});
+
+  Response notFound(String body) => 
+    Response.notFound(body, headers: {'Content-Type': 'application/json'});
+
+  Response badRequest(String body) => 
+    Response(400, body: body, headers: {'Content-Type': 'application/json'});
 }
