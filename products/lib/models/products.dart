@@ -23,7 +23,7 @@ class Product {
   late final String createdAt;
 
   @JsonKey(name: 'updated-at')
-  late final String updatedAt;
+  late String updatedAt;
 
   @JsonKey(includeIfNull: false, name: 'deleted-at')
   final String? deletedAt;
@@ -57,17 +57,23 @@ class ProductList {
     _product_list.add(product);
   }
 
-  Product? getProduct(int id) {
-    final product = _product_list.firstWhere((prod) => prod.id == id, orElse: () => throw NullThrownError);
+  Product getProduct(int id) {
+    final product = _product_list.firstWhere(
+      (prod) => prod.id == id, orElse: () => throw FormatException('Product not found')
+    );
+    
     return product;
   }
 
   void updateProduct(Product data, int id) {
     final index = _product_list.indexWhere((prod) => prod.id == id);
-    if (index == -1) {
-      throw NullThrownError;
-    }
-
+    if (index == -1) throw FormatException('Product not found');
     _product_list[index] = data;
+  }
+
+  void deleteProduct(int id) {
+    final index = _product_list.indexWhere((prod) => prod.id == id);
+    if (index == -1) throw FormatException('Product not found');
+    _product_list.removeAt(index);
   }
 }
