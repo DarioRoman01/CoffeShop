@@ -10,7 +10,7 @@ class ProductService {
   Router get router {
     final router = Router();
 
-    router.get('/', (Request req)  => okResponse(json.encode(data.products)));
+    router.get('/', (Request req) => okResponse(json.encode(data.products)));
 
     router.get('/<id|[0-9]+>', (Request req, String id) {
       try {
@@ -18,7 +18,8 @@ class ProductService {
         final product = data.getProduct(parsedId);
         return okResponse(json.encode(product));
       } catch (e) {
-        return notFound(json.encode({'message': (e as FormatException).message}));
+        return notFound(
+            json.encode({'message': (e as FormatException).message}));
       }
     });
 
@@ -29,13 +30,11 @@ class ProductService {
         final newProduct = Product.fromJson(json.decode(payload));
 
         data.updateProduct(newProduct, parsedId);
-        return Response.ok(payload,
-            headers: {'Content-Type': 'application/json'});
+        return okResponse(payload);
       } catch (e) {
         if (e is FormatException) {
           return notFound(json.encode({'message': e.message}));
-        } 
-        else if (e is BadKeyException) {
+        } else if (e is BadKeyException) {
           return badRequest(json.encode({'message': e.message}));
         }
         return Response.internalServerError();
@@ -62,7 +61,7 @@ class ProductService {
         final parsedId = int.parse(id);
         data.deleteProduct(parsedId);
         return Response.ok('Product deleted');
-      } catch(e) {
+      } catch (e) {
         if (e is FormatException) {
           return notFound(json.encode({'message': e.message}));
         }
@@ -73,12 +72,12 @@ class ProductService {
     return router;
   }
 
-  Response okResponse(String body) => 
-    Response.ok(body, headers: {'Content-Type': 'application/json'});
+  Response okResponse(String body) =>
+      Response.ok(body, headers: {'Content-Type': 'application/json'});
 
-  Response notFound(String body) => 
-    Response.notFound(body, headers: {'Content-Type': 'application/json'});
+  Response notFound(String body) =>
+      Response.notFound(body, headers: {'Content-Type': 'application/json'});
 
-  Response badRequest(String body) => 
-    Response(400, body: body, headers: {'Content-Type': 'application/json'});
+  Response badRequest(String body) =>
+      Response(400, body: body, headers: {'Content-Type': 'application/json'});
 }

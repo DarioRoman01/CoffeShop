@@ -19,13 +19,13 @@ class Product {
   @JsonKey(required: true)
   final String sku;
 
-  @JsonKey(name: 'created-at')
+  @JsonKey(name: 'created_at')
   late final String createdAt;
 
-  @JsonKey(name: 'updated-at')
+  @JsonKey(name: 'updated_at')
   late String updatedAt;
 
-  @JsonKey(includeIfNull: false, name: 'deleted-at')
+  @JsonKey(includeIfNull: false, name: 'deleted_at')
   final String? deletedAt;
 
   Product(
