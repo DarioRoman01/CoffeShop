@@ -4,13 +4,16 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 
 void main(List<String> arguments) async {
+ 
+
   final app = Router();
 
-  app.mount('/products/', ProductService().router);
+  app.mount('/products/', ProductService().handler);
 
   app.get('/hello', (Request req) {
     return Response.ok('Hello World!!!');
   });
 
   await io.serve(app, 'localhost', 1323);
+  print('app listening on port ${1323}');
 }

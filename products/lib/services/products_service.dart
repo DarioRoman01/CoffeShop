@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf/shelf.dart';
@@ -6,8 +7,14 @@ import 'package:json_annotation/src/allowed_keys_helpers.dart';
 
 class ProductService {
   final data = ProductList();
+  final corsHeaders = {
+    'Access-Control-Allow-Origin': 'http://localhost:3000',
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Origin, Content-Type',
+    'Content-Type': 'application/json',
+  };
 
-  Router get router {
+  FutureOr<Response> Function(Request) get handler {
     final router = Router();
 
     router.get('/', (Request req) => okResponse(json.encode(data.products)));
@@ -69,15 +76,25 @@ class ProductService {
       }
     });
 
-    return router;
+    final handler = Pipeline().addMiddleware((innerHandler) {
+      return (request) async {
+        final response = await innerHandler(request);
+        if (request.method == 'OPTIONS') {
+          return Response.ok('', headers: corsHeaders);
+        }
+
+        return response;
+      };
+    }).addHandler(router);
+
+    return handler;
   }
 
-  Response okResponse(String body) =>
-      Response.ok(body, headers: {'Content-Type': 'application/json'});
+  Response okResponse(String body) => Response.ok(body, headers: corsHeaders);
 
   Response notFound(String body) =>
-      Response.notFound(body, headers: {'Content-Type': 'application/json'});
+      Response.notFound(body, headers: corsHeaders);
 
   Response badRequest(String body) =>
-      Response(400, body: body, headers: {'Content-Type': 'application/json'});
+      Response(400, body: body, headers: corsHeaders);
 }
