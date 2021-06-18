@@ -22,7 +22,7 @@ class CoffeList extends React.Component<{}, { products: Product[] }> {
 
   async getData() {
     try {
-      const res = await axios.get<Product[]>(process.env.API_URL!);
+      const res = await axios.get<Product[]>('http://localhost:1323/products/');
       console.log(res);
       this.setState({ products: res.data });
     } catch (error) {
