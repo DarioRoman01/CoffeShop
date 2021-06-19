@@ -19,21 +19,34 @@ async fn save_file(
     data: web::Path<FileParams>,
 ) -> Result<HttpResponse, Error> {
     while let Ok(Some(mut field)) = payload.try_next().await {
-        let content_type = field.content_disposition().unwrap();
-        let filename = content_type.get_filename().unwrap();
         let filepath = format!(
-            "./imagestore/{}/{}",
+            "./imagestore/{}",
             data.id,
-            sanitize_filename::sanitize(&filename)
         );
 
-        let mut f = web::block(|| std::fs::File::create(filepath))
+        let mut path = PathBuf::from(filepath);
+        if !path.exists() {
+            std::fs::create_dir(&path)?;
+            path = path.join(PathBuf::from(&data.filename));
+            let mut f = web::block(|| std::fs::File::create(path))
+                .await
+                .unwrap();
+    
+            while let Some(chunk) = field.next().await {
+                let data = chunk.unwrap();
+                f = web::block(move || f.write_all(&data).map(|_| f)).await?;
+            }
+        } else {
+            path = path.join(PathBuf::from(&data.filename));
+            std::fs::remove_file(path.file_name().unwrap())?;
+            let mut f = web::block(|| std::fs::File::create(path))
             .await
             .unwrap();
 
-        while let Some(chunk) = field.next().await {
-            let data = chunk.unwrap();
-            f = web::block(move || f.write_all(&data).map(|_| f)).await?;
+            while let Some(chunk) = field.next().await {
+                let data = chunk.unwrap();
+                f = web::block(move || f.write_all(&data).map(|_| f)).await?;
+            }
         }
     }
 
@@ -46,12 +59,16 @@ async fn get_file(file_data: web::Path<FileParams>) -> Result<NamedFile> {
         "./imagestore/{}/{}",
         file_data.id, file_data.filename
     ));
+
     Ok(NamedFile::open(path)?)
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(get_file).service(save_file))
+    HttpServer::new(|| 
+        App::new()
+        .service(get_file)
+        .service(save_file))
         .bind("127.0.0.1:8080")?
         .run()
         .await
