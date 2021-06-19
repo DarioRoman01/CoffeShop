@@ -38,7 +38,10 @@ async fn save_file(
             }
         } else {
             path = path.join(PathBuf::from(&data.filename));
-            fs::remove_file(&path)?;
+            match fs::remove_file(&path) {
+                Ok(()) => (),
+                Err(_) => return Ok(HttpResponse::NotFound().body("Unable to update the requested file")),
+            }
 
             let mut f = web::block(|| fs::File::create(path))
             .await
@@ -51,7 +54,7 @@ async fn save_file(
         }
     }
 
-    Ok(HttpResponse::Ok().into())
+    Ok(HttpResponse::Ok().body("File created succesfully"))
 }
 
 #[get("/images/{id:[0-9]+}/{filename:[a-zA-Z]+\\.[a-z]{3}}")]
