@@ -25,6 +25,10 @@ class Admin extends React.Component<{}, any> {
       toastShow: false,
       toastText: "asd",
     };
+
+    this.validated = this.validated.bind(this);
+    this.changeHandler = this.changeHandler.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   validated(): boolean {
@@ -45,11 +49,10 @@ class Admin extends React.Component<{}, any> {
     // create the data
     const data = new FormData()
     data.append('file', this.state.file);
-    data.append('id', this.state.id);
 
     try {
       const res = await axios({
-        url: process.env.IMAGES!,
+        url: `http://localhost:8080/images/${this.state.id}`,
         method: 'POST',
         data: data,
         headers: {
@@ -68,7 +71,7 @@ class Admin extends React.Component<{}, any> {
   changeHandler(event: any) {
     if (event.target.name === "file") {
       this.setState({
-        [event.target.name]: event.target.files[0],
+        file: event.target.files[0],
         toastShow: false,
       });
       return;
