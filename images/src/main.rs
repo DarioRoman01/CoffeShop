@@ -2,7 +2,7 @@ use std::io::Write;
 
 use actix_files::NamedFile;
 use actix_multipart::Multipart;
-use actix_web::{self, get, post, web, App, Error, HttpResponse, HttpServer, Result};
+use actix_web::{self, web, App, Error, HttpResponse, HttpServer, Result};
 use futures::{StreamExt, TryStreamExt};
 use serde::Deserialize;
 use std::{fs, path::PathBuf};
@@ -13,7 +13,6 @@ struct FileParams {
     filename: String,
 }
 
-#[post("/images/{id:[0-9]+}/{filename:[a-zA-Z]+\\.[a-z]{3}}")]
 async fn save_file(
     mut payload: Multipart,
     data: web::Path<FileParams>,
@@ -57,7 +56,18 @@ async fn save_file(
     Ok(HttpResponse::Ok().body("File created succesfully"))
 }
 
-#[get("/images/{id:[0-9]+}/{filename:[a-zA-Z]+\\.[a-z]{3}}")]
+async fn delete_file(file_data: web::Path<FileParams>) -> HttpResponse {
+    let path = PathBuf::from(format!(
+        "./imagestore/{}/{}",
+        file_data.id, file_data.filename
+    ));
+
+    match fs::remove_file(path) {
+        Ok(_) => return HttpResponse::Ok().body("file deleted succesfully"),
+        Err(_) => return HttpResponse::NotFound().body("File does not exist"),
+    }
+}
+
 async fn get_file(file_data: web::Path<FileParams>) -> Result<NamedFile> {
     let path = PathBuf::from(format!(
         "./imagestore/{}/{}",
@@ -71,8 +81,12 @@ async fn get_file(file_data: web::Path<FileParams>) -> Result<NamedFile> {
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| 
         App::new()
-        .service(get_file)
-        .service(save_file))
+        .service(
+            web::resource("/images/{id:[0-9]+}/{filename:[a-zA-Z]+\\.[a-z]{3}}")
+            .route(web::post().to(save_file))
+            .route(web::get().to(get_file))
+            .route(web::delete().to(delete_file))
+        ))
         .bind("127.0.0.1:8080")?
         .run()
         .await
