@@ -5,7 +5,7 @@ use actix_multipart::Multipart;
 use actix_web::{self, get, post, web, App, Error, HttpResponse, HttpServer, Result};
 use futures::{StreamExt, TryStreamExt};
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 #[derive(Deserialize)]
 struct FileParams {
@@ -26,9 +26,9 @@ async fn save_file(
 
         let mut path = PathBuf::from(filepath);
         if !path.exists() {
-            std::fs::create_dir(&path)?;
+            fs::create_dir(&path)?;
             path = path.join(PathBuf::from(&data.filename));
-            let mut f = web::block(|| std::fs::File::create(path))
+            let mut f = web::block(|| fs::File::create(path))
                 .await
                 .unwrap();
     
@@ -38,8 +38,9 @@ async fn save_file(
             }
         } else {
             path = path.join(PathBuf::from(&data.filename));
-            std::fs::remove_file(path.file_name().unwrap())?;
-            let mut f = web::block(|| std::fs::File::create(path))
+            fs::remove_file(&path)?;
+
+            let mut f = web::block(|| fs::File::create(path))
             .await
             .unwrap();
 
