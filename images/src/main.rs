@@ -3,7 +3,7 @@ use std::io::Write;
 use actix_files::NamedFile;
 use actix_cors::Cors;
 use actix_multipart::Multipart;
-use actix_web::{self, web, App, Error, HttpResponse, HttpServer, Result, http::header};
+use actix_web::{self, web, App, Error, HttpResponse, HttpServer, Result, http::header, middleware};
 use futures::{StreamExt, TryStreamExt};
 use serde::Deserialize;
 use std::{fs, path::PathBuf};
@@ -81,6 +81,7 @@ async fn get_file(file_data: web::Path<FileParams>) -> Result<NamedFile> {
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| 
         App::new()
+        .wrap(middleware::Compress::default())
         .wrap(Cors::default()
             .allowed_origin("http://localhost:3000")
             .allowed_methods(vec!["GET", "POST", "DELETE"])
