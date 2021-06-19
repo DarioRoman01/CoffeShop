@@ -11,6 +11,12 @@ type ToasterState = {
 }
 
 class Toaster extends React.Component<ToasterProps, ToasterState> {
+	constructor(props: ToasterProps) {
+		super(props);
+		this.state = {show: false}
+		this.hide = this.hide.bind(this);
+	}
+
 	hide() {
 		this.setState({show: false});
 	}

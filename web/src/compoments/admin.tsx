@@ -112,3 +112,6 @@ class Admin extends React.Component<{}, any> {
     );
   }
 }
+
+
+export default Admin;
