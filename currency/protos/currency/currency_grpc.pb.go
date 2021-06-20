@@ -43,7 +43,7 @@ func (c *currencyClient) GetRate(ctx context.Context, in *RateRequest, opts ...g
 // for forward compatibility
 type CurrencyServer interface {
 	GetRate(context.Context, *RateRequest) (*RateResponse, error)
-	mustEmbedUnimplementedCurrencyServer()
+	MustEmbedUnimplementedCurrencyServer()
 }
 
 // UnimplementedCurrencyServer must be embedded to have forward compatible implementations.
@@ -53,13 +53,13 @@ type UnimplementedCurrencyServer struct {
 func (UnimplementedCurrencyServer) GetRate(context.Context, *RateRequest) (*RateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRate not implemented")
 }
-func (UnimplementedCurrencyServer) mustEmbedUnimplementedCurrencyServer() {}
+func (UnimplementedCurrencyServer) MustEmbedUnimplementedCurrencyServer() {}
 
 // UnsafeCurrencyServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to CurrencyServer will
 // result in compilation errors.
 type UnsafeCurrencyServer interface {
-	mustEmbedUnimplementedCurrencyServer()
+	MustEmbedUnimplementedCurrencyServer()
 }
 
 func RegisterCurrencyServer(s grpc.ServiceRegistrar, srv CurrencyServer) {
